@@ -50,7 +50,7 @@ def make_dataset(root, train=True):
 
 
 def getImg_count(dir):
-  files = glob.glob(os.path.join((dir, '*.tif')))
+  files = glob.glob(os.path.join(dir, '*.tif'))
   return len(files)
 
 class kaggle2016nerve(data.Dataset):
