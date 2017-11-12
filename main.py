@@ -49,6 +49,8 @@ if args.resume:
 
     if args.cuda == False:
       checkpoint = torch.load(args.resume, map_location={'cuda:0':'cpu'})
+    else:
+      checkpoint = torch.load(args.resume)
 
     args.start_epoch = checkpoint['epoch']
 
@@ -134,8 +136,8 @@ for i, (x,y) in enumerate(train_loader):
   if i >= 11:
     break
 
-  y_pred = model(Variable(x))
+  y_pred = model(Variable(x.cuda()))
   showImg(x.numpy(), binary=False, fName='ori_'+str(i))
-  showImg(y_pred.data.numpy(), binary=False, fName='pred_'+str(i))
+  showImg(y_pred.cpu().data.numpy(), binary=False, fName='pred_'+str(i))
   showImg(y.numpy(), fName='gt_'+str(i))
 
