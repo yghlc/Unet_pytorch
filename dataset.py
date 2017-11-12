@@ -38,7 +38,7 @@ def make_dataset(root, train=True):
       name_str = fName.split('_')
       flag_name = '_'+ name_str[len(name_str)-3]+'_'+ name_str[len(name_str)-2] + '_'+name_str[len(name_str)-1]
 
-      fImg = glob.glob(os.path.join(image_dir, flag_name))
+      fImg = glob.glob(os.path.join(image_dir, "*"+flag_name))
       if len(fImg) != 1:
         assert False
         print("Get the image name failed")
