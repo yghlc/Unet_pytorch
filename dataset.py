@@ -49,6 +49,10 @@ def make_dataset(root, train=True):
   return dataset
 
 
+def getImg_count(dir):
+  files = glob.glob(os.path.join((dir, '*.tif')))
+  return len(files)
+
 class kaggle2016nerve(data.Dataset):
   """
   Read dataset of kaggle ultrasound nerve segmentation dataset
@@ -82,23 +86,19 @@ class kaggle2016nerve(data.Dataset):
 
       return img, gt
 
-  def getImg_count(self, dir):
-    files = glob.glob(os.path.join(os.path.join(dir, '*.tif'))
-    return len(files)
-
 
   def __len__(self):
     if self.train:
       # train image count
       label_dir = os.path.join(data.Dataset, 'split_labels')
-      count = self.getImg_count(label_dir)
+      count = getImg_count(label_dir)
       print("Image count for training is %d"%count)
       return count
       # return 5635
       # test image count
     else:
       label_dir = os.path.join(data.Dataset, 'inf_split_images')
-      count = self.getImg_count(label_dir)
+      count = getImg_count(label_dir)
       print("Image count for inference is %d"%count)
       return count
       # return 5508   # test image count
