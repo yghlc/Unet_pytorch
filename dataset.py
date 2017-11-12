@@ -61,6 +61,7 @@ class kaggle2016nerve(data.Dataset):
 
   def __init__(self, root, transform=None, train=True):
     self.train = train
+    self.root = root
 
     # we cropped the image
     self.nRow = 400
@@ -90,14 +91,14 @@ class kaggle2016nerve(data.Dataset):
   def __len__(self):
     if self.train:
       # train image count
-      label_dir = os.path.join(data.Dataset, 'split_labels')
+      label_dir = os.path.join(self.root, 'split_labels')
       count = getImg_count(label_dir)
       print("Image count for training is %d"%count)
       return count
       # return 5635
       # test image count
     else:
-      label_dir = os.path.join(data.Dataset, 'inf_split_images')
+      label_dir = os.path.join(self.root, 'inf_split_images')
       count = getImg_count(label_dir)
       print("Image count for inference is %d"%count)
       return count
