@@ -10,20 +10,40 @@ import numpy as np
 
 from torchvision import transforms
 
+# def make_dataset(root, train=True):
+#
+#   dataset = []
+#
+#   if train:
+#     dir = os.path.join(root, 'train')
+#
+#     for fGT in glob.glob(os.path.join(dir, '*_mask.tif')):
+#       fName = os.path.basename(fGT)
+#       fImg = fName[:-9] + '.tif'
+#
+#       dataset.append( [os.path.join(dir, fImg), os.path.join(dir, fName)] )
+#
+#   return dataset
+
 def make_dataset(root, train=True):
 
   dataset = []
 
   if train:
-    dir = os.path.join(root, 'train')
+    label_dir = os.path.join(root, 'split_labels')
+    image_dir = os.path.join(root, 'split_images')
 
-    for fGT in glob.glob(os.path.join(dir, '*_mask.tif')):
+    for fGT in glob.glob(os.path.join(label_dir, '*.tif')):
       fName = os.path.basename(fGT)
-      fImg = fName[:-9] + '.tif'
+      name_str = fName.split('_')
+      flag_name = '_'+ name_str[len(name_str)-3]+'_'+ name_str[len(name_str)-2] + '_'+name_str[len(name_str)-1]
 
-      dataset.append( [os.path.join(dir, fImg), os.path.join(dir, fName)] )
+      fImg = glob.glob(os.path.join(image_dir, flag_name))
+
+      dataset.append( [fGT, fImg] )
 
   return dataset
+
 
 class kaggle2016nerve(data.Dataset):
   """
