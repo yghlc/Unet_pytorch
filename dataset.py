@@ -82,8 +82,23 @@ class kaggle2016nerve(data.Dataset):
 
       return img, gt
 
+  def getImg_count(self, dir):
+    files = glob.glob(os.path.join(os.path.join(dir, '*.tif'))
+    return len(files)
+
+
   def __len__(self):
     if self.train:
-      return 5635
+      # train image count
+      label_dir = os.path.join(data.Dataset, 'split_labels')
+      count = self.getImg_count(label_dir)
+      print("Image count for training is %d"%count)
+      return count
+      # return 5635
+      # test image count
     else:
-      return 5508
+      label_dir = os.path.join(data.Dataset, 'inf_split_images')
+      count = self.getImg_count(label_dir)
+      print("Image count for inference is %d"%count)
+      return count
+      # return 5508   # test image count
