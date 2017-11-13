@@ -13,4 +13,4 @@ export CUDA_VISIBLE_DEVICES=1
 #python main.py unsData --worker 1 --batchSize 8 --niter 25 --lr 0.0002 --cuda --useBN --output_name checkpoint_1.tar
 
 #resume 
-python main.py unsData --worker 1 --batchSize 8 --niter 0 --lr 0.0002 --cuda --useBN --output_name checkpoint_1_1.tar --resume checkpoint_1.tar
+python main.py unsData --worker 1 --batchSize 8 --niter 75 --lr 0.0002 --cuda --useBN --output_name checkpoint_1_1.tar --resume checkpoint_1.tar

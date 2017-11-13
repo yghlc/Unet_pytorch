@@ -39,7 +39,7 @@ class Net(nn.Module):
   def __init__(self, useBN=False):
     super(Net, self).__init__()
 
-    self.conv1   = add_conv_stage(1, 32, useBN=useBN)
+    self.conv1   = add_conv_stage(3, 32, useBN=useBN)
     self.conv2   = add_conv_stage(32, 64, useBN=useBN)
     self.conv3   = add_conv_stage(64, 128, useBN=useBN)
     self.conv4   = add_conv_stage(128, 256, useBN=useBN)

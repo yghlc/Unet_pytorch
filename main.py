@@ -28,6 +28,9 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path
 parser.add_argument('--useBN', action='store_true', help='enalbes batch normalization')
 parser.add_argument('--output_name', default='checkpoint___.tar', type=str, help='output checkpoint filename')
 
+parser.add_argument('--test'  , action='store_true', help='switch to test model, without train')
+
+
 args = parser.parse_args()
 print(args)
 
@@ -106,8 +109,9 @@ def train(epoch):
     'loss': loss.data[0]/len(train_loader)
   })
 
-for epoch in range(args.niter):
-  train(epoch)
+if args.test == False:
+  for epoch in range(args.niter):
+    train(epoch)
 
 
 ############ just check test (visualization)
@@ -133,8 +137,9 @@ model.eval()
 train_loader.batch_size=1
 
 for i, (x,y) in enumerate(train_loader):
-  if i >= 11:
-    break
+  if args.test == False:
+    if i >= 11:
+      break
 
   y_pred = model(Variable(x.cuda()))
   showImg(x.numpy(), binary=False, fName='ori_'+str(i))

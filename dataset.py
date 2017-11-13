@@ -44,7 +44,12 @@ def make_dataset(root, train=True):
         print("Get the image name failed")
       fImg = fImg[0]
 
-      dataset.append( [fGT, fImg] )
+      dataset.append( [fImg, fGT] )
+  else:
+    image_dir = os.path.join(root, 'inf_split_images')
+    dataset = glob.glob(os.path.join(image_dir, '*.tif'))
+#    for img in glob.glob(os.path.join(image_dir, '*.tif')):
+#      dataset.append([img])
 
   return dataset
 
@@ -69,23 +74,42 @@ class kaggle2016nerve(data.Dataset):
 
     if self.train:
       self.train_set_path = make_dataset(root, train)
+    else:
+      self.train_set_path = make_dataset(root, train)
 
   def __getitem__(self, idx):
     if self.train:
       img_path, gt_path = self.train_set_path[idx]
 
       img = imread(img_path)
+      #img.resize(self.nRow,self.nCol)
       img = img[0:self.nRow, 0:self.nCol]
       img = np.atleast_3d(img).transpose(2, 0, 1).astype(np.float32)
-      img = (img - img.min()) / (img.max() - img.min())
+      if (img.max() - img.min()) < 0.01:
+        pass
+      else:
+        img = (img - img.min()) / (img.max() - img.min())
       img = torch.from_numpy(img).float()
 
       gt = imread(gt_path)[0:self.nRow, 0:self.nCol]
       gt = np.atleast_3d(gt).transpose(2, 0, 1)
-      gt = gt / 255.0
+      #gt = gt / 255.0   # we don't need to scale
       gt = torch.from_numpy(gt).float()
 
       return img, gt
+    else:
+      img_path = self.train_set_path[idx]
+      img_name_noext = os.path.splitext(os.path.basename(img_path))[0]
+      img = imread(img_path)
+      # img.resize(self.nRow,self.nCol)
+      img = img[0:self.nRow, 0:self.nCol]
+      img = np.atleast_3d(img).transpose(2, 0, 1).astype(np.float32)
+      if (img.max() - img.min()) < 0.01:
+        pass
+      else:
+        img = (img - img.min()) / (img.max() - img.min())
+      img = torch.from_numpy(img).float()
+      return img,img_name_noext
 
 
   def __len__(self):
