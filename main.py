@@ -99,9 +99,15 @@ def train(epoch):
       optimizer.step()
  
     if i % 5 == 0:
-      print('batch no.: {}, loss: {}'.format(i, loss.data[0]))
+      out_message='batch no.: {}, loss: {}'.format(i, loss.data[0])
+      print(out_message)
+      with open("train_loss.txt",'a') as log:
+        log.writelines(out_message)
 
-  print('epoch: {}, epoch loss: {}'.format(epoch,loss.data[0]/len(train_loader) ))
+  out_message='epoch: {}, epoch loss: {}'.format(epoch,loss.data[0]/len(train_loader) )
+  print(out_message)
+  with open("train_loss.txt", 'a') as log:
+    log.writelines(out_message)
 
   save_checkpoint({
     'epoch': epoch + 1,

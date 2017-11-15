@@ -27,15 +27,23 @@ overlay=$(python2 ${para_py} -p ${para_file} inf_pixel_overlay)     # the overla
 ${eo_dir}/split_image.py -W ${patch_w} -H ${patch_h} -e ${overlay} -o ${PWD}/inf_split_images ${RSimg}
 
 # make sure all the images have the same size
+out_w=$(python2 ${para_py} -p ${para_file} out_patch_width)
+out_h=$(python2 ${para_py} -p ${para_file} out_patch_height)
+
 cd $folder
-min_size=692340
 for img in *.tif
 do
-    size=$( stat -c%s $img )
-    if [ "$size" -lt  "$min_size" ]
+    size=$(gdalinfo ${img} | grep "Size is" )
+    width=$(echo $size | cut -d' ' -f 3 )
+    width=${width::-1}
+    height=$(echo $size | cut -d' ' -f 4 )
+    echo "*****width,height*****:" $width , $height
+    if [ "$width" -lt  $out_w -o $height -lt $out_h ]
     then
         echo $img
-        gdal_translate -srcwin 0 0 480 480 -a_nodata 0 $img temp.tif
+        gdal_translate -srcwin 0 0 $out_w $out_h -a_nodata 0 $img temp.tif
         mv temp.tif $img
     fi
 done
+
+cd ..
