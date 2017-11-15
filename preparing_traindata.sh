@@ -26,8 +26,18 @@ patch_w=$(python2 ${para_py} -p ${para_file} train_patch_width)
 patch_h=$(python2 ${para_py} -p ${para_file} train_patch_height)
 overlay=$(python2 ${para_py} -p ${para_file} train_pixel_overlay)     # the overlay of patch in pixel
 
-${eo_dir}/split_image.py -W ${patch_w} -H ${patch_h}  -e ${overlay} -o  ${root}/${test_dir}/split_images $input_train_image
-${eo_dir}/split_image.py -W ${patch_w} -H ${patch_h}  -e ${overlay} -o ${root}/${test_dir}/split_labels $input_GT
+trainImg_dir=$(python2 ${para_py} -p ${para_file} input_train_dir)
+labelImg_dir=$(python2 ${para_py} -p ${para_file} input_label_dir)
+
+for img in ${trainImg_dir}/*.tif
+do
+${eo_dir}/split_image.py -W ${patch_w} -H ${patch_h}  -e ${overlay} -o  ${root}/${test_dir}/split_images $img
+done
+for img in ${labelImg_dir}/*.tif
+do
+${eo_dir}/split_image.py -W ${patch_w} -H ${patch_h}  -e ${overlay} -o ${root}/${test_dir}/split_labels $img
+done
+
 
 ## remove ( enlarge ) files which is not 480*480
 
