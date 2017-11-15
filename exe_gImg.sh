@@ -21,14 +21,14 @@ data_dir=${PWD}
 #python main.py unsData --worker 1 --batchSize 8 --niter 25 --lr 0.0002 --cuda --useBN --output_name checkpoint_1.tar
 
 #resume 
-#python main.py ${data_dir} --worker 1 --batchSize 8 --niter 1 --lr 0.0002 --cuda --useBN --output_name checkpoint_gImg.tar
+#python main.py ${data_dir} --worker 1 --batchSize 8 --niter 100 --lr 0.0002 --cuda --useBN --output_name checkpoint_gImg_v4.tar
 
-
+#exit
 
 ### run test
 rm -r assets
 mkdir assets
-python test.py ${data_dir} --worker 1 --batchSize 1 --cuda --useBN --resume checkpoint_gImg.tar
+python test.py ${data_dir} --worker 1 --batchSize 1 --cuda --useBN --resume checkpoint_gImg_v4.tar
 
 ### post processing
 cd assets

@@ -69,8 +69,8 @@ class kaggle2016nerve(data.Dataset):
     self.root = root
 
     # we cropped the image
-    self.nRow = 400
-    self.nCol = 560
+    self.nRow = 480
+    self.nCol = 480
 
     if self.train:
       self.train_set_path = make_dataset(root, train)
