@@ -38,12 +38,12 @@ print(args)
 dataset = kaggle2016nerve(args.dataroot)
 train_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batchSize,
                                            num_workers=args.workers, shuffle=True)
-
+#torch.backends.cudnn.enabled = True
 ############## create model
 model = Net(args.useBN)
 if args.cuda:
   model.cuda()
-  cudnn.benchmark = True
+  cudnn.benchmark = False
 
 ############## resume
 if args.resume:
