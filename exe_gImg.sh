@@ -9,7 +9,7 @@ eo_dir=$(python2 ${para_py} -p ${para_file} codes_dir)
 expr=${PWD}
 testid=$(basename $expr)
 
-data_dir=${PWD}
+data_dir=/home/hlc/Data/Qinghai-Tibet/beiluhe/beiluhe_google_img
 
 #  run our pre-trained model provided by user ,  commit:
 #python main.py unsData --resume checkpoint_BN.tar --niter 0 --useBN 
@@ -28,7 +28,7 @@ data_dir=${PWD}
 ### run test
 rm -r assets
 mkdir assets
-python test.py ${data_dir} --worker 1 --batchSize 1 --cuda --useBN --resume checkpoint_gImg_v4.tar
+python test.py ${data_dir} para.ini inf_list.txt  --worker 1 --batchSize 1 --cuda --useBN --resume checkpoint_gImg_v4.tar
 
 ### post processing
 cd assets

@@ -1,4 +1,4 @@
-from dataset import *
+from datasetRS import *
 from model import Net
 
 import argparse
@@ -11,11 +11,16 @@ from torch.autograd import Variable
 
 from PIL import Image
 
+import parameters
+
 from torch.autograd import Variable
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dataroot', help='path to test dataset ')
+parser.add_argument('para', help='path to the parameter file')
+parser.add_argument('list', help='path to the list file')
+
 # parser.add_argument('dataroot', default='data', help='path to dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=1)
 parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
@@ -27,7 +32,12 @@ parser.add_argument('--useBN', action='store_true', help='enalbes batch normaliz
 args = parser.parse_args()
 print(args)
 
-dataset = kaggle2016nerve(args.dataroot,train=False)
+parameters.set_saved_parafile_path(args.para)
+patch_w = parameters.get_digit_parameters("","train_patch_width",None,'int')
+patch_h = parameters.get_digit_parameters("","train_patch_height",None,'int')
+overlay = parameters.get_digit_parameters("","train_pixel_overlay",None,'int')
+
+dataset = RemoteSensingImg(args.dataroot, args.list, patch_w,patch_h, overlay,train=False)
 train_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batchSize,
                                            num_workers=args.workers, shuffle=False)
 
@@ -74,14 +84,43 @@ def showImg(img, binary=True, fName=''):
   else:
     img.show()
 
+def saveImg(img,patch_info, binary=True, fName=''):
+  """
+  show image from given numpy image
+  """
+  img = img[0,0,:,:]
+
+  if binary:
+    img = img > 0.5
+
+  img = Image.fromarray(np.uint8(img*255), mode='L')
+  org_img_path = patch_info[0][0]
+  boundary = patch_info[1]
+
+  if fName:
+    #img.save('inf_result/'+fName+'.png')
+    with rasterio.open(org_img_path) as org:
+        profile = org.profile
+    # calculate new transform and update profile (transform, width, height)
+
+    profile.update(dtype=rasterio.uint8, count=1, compress='lzw')
+
+    with rasterio.open('inf_result/'+fName+'.tif',"w") as dst:
+        pass
+
+  else:
+    img.show()
+
 model.eval()
 train_loader.batch_size=args.batchSize
 
-for i, (x,img_name) in enumerate(train_loader):
+for i, (x,patch_info) in enumerate(train_loader):
   #print(img_name[0])
-  file_name = img_name[0]
+  org_img = patch_info[0][0]
+
+  file_name = os.path.splitext(os.path.basename(org_img))[0]+'_'+str(i)
   print("inferece: %s "%file_name)
   y_pred = model(Variable(x.cuda()))
-  showImg(x.numpy(), binary=False, fName=file_name)
-  showImg(y_pred.cpu().data.numpy(), binary=True, fName=file_name+'_pred')
-  #showImg(y.numpy(), fName='gt_'+str(i))
+  saveImg(x.numpy(), patch_info,binary=False, fName=file_name)
+  saveImg(y_pred.cpu().data.numpy(),patch_info, binary=True, fName=file_name+'_pred')
+

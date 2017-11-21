@@ -13,47 +13,95 @@ import sys
 
 basicCodes_path = HOME + '/codes/PycharmProjects/DeeplabforRS'
 sys.path.insert(0, basicCodes_path)
+from basic_src.RSImage import RSImageclass
+import basic_src.basic as  basic
 import split_image
 
 
-class patch(object):
+class patchclass(object):
     """
     store the information of each patch (a small subset of the remote sensing images)
     """
-    def __init__(self,org_img):
-        self.org_img = org_img  # the original remote sensing images of this patch (the name of image without absolute path)
-        self.boundary=None      # the boundary of patch (xoff,yoff ,xsize, ysize) in pixel coordinate
+    def __init__(self,org_img,boundary):
+        self.org_img = org_img  # the original remote sensing images of this patch
+        self.boundary=boundary      # the boundary of patch (xoff,yoff ,xsize, ysize) in pixel coordinate
+    def boundary(self):
+        return self.boundary
 
+import rasterio
+def read_patch(patch_obj):
+    """
+    Read all the pixel of the patch
+    :param patch_obj: the instance of patchclass 
+    :return: The array of pixel value
+    """
+    # window structure; expecting ((row_start, row_stop), (col_start, col_stop))
+    boundary = patch_obj.boundary #(xoff,yoff ,xsize, ysize)
+    window = ((boundary[1],boundary[1]+boundary[3])  ,  (boundary[0],boundary[0]+boundary[2]))
+    with rasterio.open(patch_obj.org_img) as img_obj:
+        # read the all bands
+        indexes = img_obj.indexes
+        data = img_obj.read(indexes,window=window)
+        return data
 
-def check_input_image_and_label():
+def check_input_image_and_label(image_path, label_path):
     """
     check the input image and label, they should have same width, height, and projection 
-    :return: (width, height) of image if successful, Otherwise None.
+    :param image_path: the path of image
+    :param label_path: the path of label
+    :return: (width, height) of image if successful, Otherwise (None, None).
     """
 
-    #TODO: add codes to check the image and lable (21 Nov, 2017, hlc)
-    pass
+    img_obj = RSImageclass()
+    if img_obj.open(image_path) is False:
+        assert False
+    label_obj = RSImageclass()
+    if label_obj.open(label_path) is False:
+        assert False
+    # check width and height
+    width = img_obj.GetWidth()
+    height = img_obj.GetHeight()
+    if width != label_obj.GetWidth() or height != label_obj.GetHeight():
+        basic.outputlogMessage("Error, not the same width and height of image (%s) and label (%s)"%(image_path,label_path))
+        assert False
+
+    # check resolution
+    if img_obj.GetXresolution() != label_obj.GetXresolution() or img_obj.GetYresolution() != label_obj.GetYresolution():
+        basic.outputlogMessage(
+            "Error, not the same resolution of image (%s) and label (%s)" % (image_path, label_path))
+        assert False
+
+    # check projection
+    if img_obj.GetProjection() != label_obj.GetProjection():
+        basic.outputlogMessage(
+            "Error, not the same projection of image (%s) and label (%s)" % (image_path, label_path))
+        assert False
+
+    return (width, height)
 
 
-def make_dataset(root,list_txt, train=True):
+def make_dataset(root,list_txt,patch_w,patch_h,adj_overlay,train=True):
     """
     get the patches information of the remote sensing images. 
     :param root: data root
     :param list_txt: a list file contain images (one row contain one train image and one label 
-    image with space in center if input for training; one row contain one image if it is for inference)
+    image with space in the center if the input is for training; one row contain one image if it is for inference)
+    :param patch_w: the width of the expected patch
+    :param patch_h: the height of the expected patch
+    :param adj_overlay: the extended distance (in pixel) to adjacent patch, make each patch has overlay with adjacent patch
     :param train:  indicate training or inference
     :return: dataset (list)
     """
     dataset = []
 
     if os.path.isfile(list_txt) is False:
-        print("error, file %s not exist"%list_txt)
+        basic.outputlogMessage("error, file %s not exist"%list_txt)
         assert False
 
     with open(list_txt) as file_obj:
         files_list = file_obj.readlines()
     if len(files_list) < 1:
-        print("error, no file name in the %s" % list_txt)
+        basic.outputlogMessage("error, no file name in the %s" % list_txt)
         assert False
 
     if train:
@@ -62,21 +110,45 @@ def make_dataset(root,list_txt, train=True):
             image_name = names_list[0]
             label_name = names_list[1].strip()
 
+            img_path = os.path.join(root,image_name)
+            label_path = os.path.join(root,label_name)
             #
-            (width,height) = check_input_image_and_label()
+            (width,height) = check_input_image_and_label(img_path,label_path)
 
             # split the image and label
-            split_image.sliding_window()
+            patch_boundary = split_image.sliding_window(width, height, patch_w, patch_h, adj_overlay)
 
+            for patch in patch_boundary:
+                # remove the patch small than model input size
+                if patch[2] < 480 or patch[3] < 480:   # xSize < 480 or ySize < 480
+                    continue
+                img_patch = patchclass(img_path,patch)
+                label_patch = patchclass(label_path,patch)
+                dataset.append([img_patch, label_patch])
 
-
-
-        dataset.append([fImg, fGT])
     else:
-        image_dir = os.path.join(root, 'test_img')
-        dataset = glob.glob(os.path.join(image_dir, '*.tif'))
-    #    for img in glob.glob(os.path.join(image_dir, '*.tif')):
-    #      dataset.append([img])
+        for line in files_list:
+            names_list = line.split()
+            image_name = names_list[0].strip()
+
+            img_path = os.path.join(root,image_name)
+            #
+            img_obj = RSImageclass()
+            if img_obj.open(img_path) is False:
+                assert False
+            width = img_obj.GetWidth()
+            height = img_obj.GetHeight()
+
+            # split the image and label
+            patch_boundary = split_image.sliding_window(width, height, patch_w, patch_h, adj_overlay)
+
+            for patch in patch_boundary:
+                # need to handle the patch with smaller size
+                # if patch[2] < 480 or patch[3] < 480:   # xSize < 480 or ySize < 480
+                #     continue
+                img_patch = patchclass(img_path,patch)
+
+                dataset.append(img_patch)
 
     return dataset
 
@@ -92,7 +164,7 @@ class RemoteSensingImg(data.Dataset):
     https://www.kaggle.com/c/ultrasound-nerve-segmentation
     """
 
-    def __init__(self, root, transform=None, train=True):
+    def __init__(self, root,list_txt,patch_w,patch_h,adj_overlay, transform=None, train=True):
         self.train = train
         self.root = root
 
@@ -100,54 +172,60 @@ class RemoteSensingImg(data.Dataset):
         self.nRow = 480
         self.nCol = 480
 
-        self.train_set_path = make_dataset(root, train)
+        self.patches = make_dataset(root, list_txt,patch_w,patch_h,adj_overlay,train)
 
     def __getitem__(self, idx):
         if self.train:
-            img_path, gt_path = self.train_set_path[idx]
+            img_patch, gt_patch = self.patches[idx]
 
-            img = imread(img_path)
+            img = read_patch(img_patch)
             # img.resize(self.nRow,self.nCol)
-            img = img[0:self.nRow, 0:self.nCol]
-            img = np.atleast_3d(img).transpose(2, 0, 1).astype(np.float32)
+            img = img[:,0:self.nRow, 0:self.nCol]
+            img = np.atleast_3d(img).astype(np.float32)
             if (img.max() - img.min()) < 0.01:
                 pass
             else:
                 img = (img - img.min()) / (img.max() - img.min())
             img = torch.from_numpy(img).float()
 
-            gt = imread(gt_path)[0:self.nRow, 0:self.nCol]
-            gt = np.atleast_3d(gt).transpose(2, 0, 1)
+            gt = read_patch(gt_patch)[:,0:self.nRow, 0:self.nCol]
+            gt = np.atleast_3d(gt)
             # gt = gt / 255.0   # we don't need to scale
             gt = torch.from_numpy(gt).float()
 
             return img, gt
         else:
-            img_path = self.train_set_path[idx]
-            img_name_noext = os.path.splitext(os.path.basename(img_path))[0]
-            img = imread(img_path)
+            img_patch = self.patches[idx]
+            patch_info = [img_patch.org_img,img_patch.boundary]
+            #img_name_noext = os.path.splitext(os.path.basename(img_patch.org_img))[0]+'_'+str(idx)
+            img = read_patch(img_patch)
             # img.resize(self.nRow,self.nCol)
-            img = img[0:self.nRow, 0:self.nCol]
-            img = np.atleast_3d(img).transpose(2, 0, 1).astype(np.float32)
+            img = img[:,0:self.nRow, 0:self.nCol]
+            img = np.atleast_3d(img).astype(np.float32)
             if (img.max() - img.min()) < 0.01:
                 pass
             else:
                 img = (img - img.min()) / (img.max() - img.min())
             img = torch.from_numpy(img).float()
-            return img, img_name_noext
+            return img, patch_info
 
     def __len__(self):
-        if self.train:
-            # train image count
-            label_dir = os.path.join(self.root, 'split_labels')
-            count = getImg_count(label_dir)
-            print("Image count for training is %d" % count)
-            return count
-            # return 5635
-            # test image count
-        else:
-            label_dir = os.path.join(self.root, 'inf_split_images')
-            count = getImg_count(label_dir)
-            print("Image count for inference is %d" % count)
-            return count
-            # return 5508   # test image count
+        count = len(self.patches)
+        print("Image count is %d" % count)
+        return count
+        # if self.train:
+        #     # train image count
+        #     label_dir = os.path.join(self.root, 'split_labels')
+        #     count = getImg_count(label_dir)
+        #     print("Image count for training is %d" % count)
+        #     return count
+        #     # return 5635
+        #     # test image count
+        # else:
+        #     label_dir = os.path.join(self.root, 'inf_split_images')
+        #     count = getImg_count(label_dir)
+        #     print("Image count for inference is %d" % count)
+        #     return count
+        #     # return 5508   # test image count
+
+
