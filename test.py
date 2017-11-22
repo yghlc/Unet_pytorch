@@ -88,7 +88,7 @@ def saveImg(img,patch_info, binary=True, fName=''):
   """
   show image from given numpy image
   """
-  img = img[0,:,:]
+  img = img[0,0,:,:]
 
   if binary:
     img = img > 0.5
@@ -128,8 +128,8 @@ for i, (x,patch_info) in enumerate(train_loader):
   file_name = os.path.splitext(os.path.basename(org_img))[0]+'_'+str(i)
   print("inferece: %s "%file_name)
   y_pred = model(Variable(x.cuda()))
-  # saveImg(x.numpy(), patch_info,binary=False, fName=file_name)
-  # saveImg(y_pred.cpu().data.numpy(),patch_info, binary=True, fName=file_name+'_pred')
-  showImg(x.numpy(),binary=False, fName=file_name)
-  showImg(y_pred.cpu().data.numpy(), binary=True, fName=file_name+'_pred')
+  saveImg(x.numpy(), patch_info,binary=False, fName=file_name)
+  saveImg(y_pred.cpu().data.numpy(),patch_info, binary=True, fName=file_name+'_pred')
+  # showImg(x.numpy(),binary=False, fName=file_name)
+  # showImg(y_pred.cpu().data.numpy(), binary=True, fName=file_name+'_pred')
 
