@@ -88,25 +88,32 @@ def saveImg(img,patch_info, binary=True, fName=''):
   """
   show image from given numpy image
   """
-  img = img[0,0,:,:]
+  img = img[0,:,:]
 
   if binary:
     img = img > 0.5
 
-  img = Image.fromarray(np.uint8(img*255), mode='L')
+  #img = Image.fromarray(np.uint8(img*255), mode='L')
+  img=img.astype(rasterio.uint8)*255
   org_img_path = patch_info[0][0]
   boundary = patch_info[1]
+  boundary = [item[0] for item in boundary]
+  xsize = boundary[2]
+  ysize = boundary[3]
+
+  window = ((boundary[1], boundary[1] + ysize), (boundary[0], boundary[0] + xsize))
 
   if fName:
     #img.save('inf_result/'+fName+'.png')
     with rasterio.open(org_img_path) as org:
         profile = org.profile
+        new_transform = org.window_transform(window)
     # calculate new transform and update profile (transform, width, height)
 
-    profile.update(dtype=rasterio.uint8, count=1, compress='lzw')
+    profile.update(dtype=rasterio.uint8, count=1, transform=new_transform,width=xsize,height=ysize)
 
-    with rasterio.open('inf_result/'+fName+'.tif',"w") as dst:
-        pass
+    with rasterio.open('inf_result/'+fName+'.tif',"w",**profile) as dst:
+        dst.write(img,1)
 
   else:
     img.show()
@@ -121,6 +128,8 @@ for i, (x,patch_info) in enumerate(train_loader):
   file_name = os.path.splitext(os.path.basename(org_img))[0]+'_'+str(i)
   print("inferece: %s "%file_name)
   y_pred = model(Variable(x.cuda()))
-  saveImg(x.numpy(), patch_info,binary=False, fName=file_name)
-  saveImg(y_pred.cpu().data.numpy(),patch_info, binary=True, fName=file_name+'_pred')
+  # saveImg(x.numpy(), patch_info,binary=False, fName=file_name)
+  # saveImg(y_pred.cpu().data.numpy(),patch_info, binary=True, fName=file_name+'_pred')
+  showImg(x.numpy(),binary=False, fName=file_name)
+  showImg(y_pred.cpu().data.numpy(), binary=True, fName=file_name+'_pred')
 
