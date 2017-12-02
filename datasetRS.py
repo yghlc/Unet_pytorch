@@ -17,6 +17,8 @@ from basic_src.RSImage import RSImageclass
 import basic_src.basic as  basic
 import split_image
 
+crop_width=480
+crop_height=480
 
 class patchclass(object):
     """
@@ -120,7 +122,7 @@ def make_dataset(root,list_txt,patch_w,patch_h,adj_overlay,train=True):
 
             for patch in patch_boundary:
                 # remove the patch small than model input size
-                if patch[2] < 480 or patch[3] < 480:   # xSize < 480 or ySize < 480
+                if patch[2] < crop_width or patch[3] < crop_height:   # xSize < 480 or ySize < 480
                     continue
                 img_patch = patchclass(img_path,patch)
                 label_patch = patchclass(label_path,patch)
@@ -144,7 +146,7 @@ def make_dataset(root,list_txt,patch_w,patch_h,adj_overlay,train=True):
 
             for patch in patch_boundary:
                 # need to handle the patch with smaller size
-                # if patch[2] < 480 or patch[3] < 480:   # xSize < 480 or ySize < 480
+                # if patch[2] < crop_width or patch[3] < crop_height:   # xSize < 480 or ySize < 480
                 #     continue
                 img_patch = patchclass(img_path,patch)
 
@@ -169,8 +171,8 @@ class RemoteSensingImg(data.Dataset):
         self.root = root
 
         # we cropped the image(the size of each patch, can be divided by 16 )
-        self.nRow = 480
-        self.nCol = 480
+        self.nRow = crop_height
+        self.nCol = crop_width
 
         self.patches = make_dataset(root, list_txt,patch_w,patch_h,adj_overlay,train)
 
