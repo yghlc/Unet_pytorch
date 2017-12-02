@@ -76,8 +76,8 @@ def check_input_image_and_label(image_path, label_path):
     # check projection
     if img_obj.GetProjection() != label_obj.GetProjection():
         basic.outputlogMessage(
-            "Error, not the same projection of image (%s) and label (%s)" % (image_path, label_path))
-        assert False
+            "warning, not the same projection of image (%s) and label (%s)" % (image_path, label_path))
+    #     assert False
 
     return (width, height)
 
@@ -109,6 +109,8 @@ def make_dataset(root,list_txt,patch_w,patch_h,adj_overlay,train=True):
     if train:
         for line in files_list:
             names_list = line.split()
+            if len(names_list) < 1: # empty line
+                continue
             image_name = names_list[0]
             label_name = names_list[1].strip()
 

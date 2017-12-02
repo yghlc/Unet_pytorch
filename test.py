@@ -33,9 +33,9 @@ args = parser.parse_args()
 print(args)
 
 parameters.set_saved_parafile_path(args.para)
-patch_w = parameters.get_digit_parameters("", "train_patch_width", None, 'int')
-patch_h = parameters.get_digit_parameters("", "train_patch_height", None, 'int')
-overlay = parameters.get_digit_parameters("", "train_pixel_overlay", None, 'int')
+patch_w = parameters.get_digit_parameters("", "inf_patch_width", None, 'int')
+patch_h = parameters.get_digit_parameters("", "inf_patch_height", None, 'int')
+overlay = parameters.get_digit_parameters("", "inf_pixel_overlay", None, 'int')
 
 dataset = RemoteSensingImg(args.dataroot, args.list, patch_w, patch_h, overlay, train=False)
 train_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batchSize,
@@ -112,6 +112,19 @@ def saveImg(img, patch_info, binary=True, fName=''):
         # calculate new transform and update profile (transform, width, height)
 
         profile.update(dtype=rasterio.uint8, count=1, transform=new_transform, width=xsize, height=ysize)
+        # set the block size, it should be a multiple of 16 (TileLength must be a multiple of 16)
+        if profile['blockxsize'] > xsize :
+            if xsize%16==0:
+                profile.update(blockxsize=xsize)
+            else:
+                profile.update(blockxsize=16)  #  profile.update(blockxsize=16)
+        if profile['blockysize'] > ysize :
+            if ysize%16==0:
+                profile.update(blockysize=ysize)
+            else:
+                profile.update(blockysize=16) #  profile.update(blockxsize=16)
+
+        #print(profile['blockxsize'],profile['blockysize'],'xsize:%d ysize:%d'%(xsize,ysize))
 
         with rasterio.open('inf_result/' + fName + '.tif', "w", **profile) as dst:
             dst.write(img, 1)
