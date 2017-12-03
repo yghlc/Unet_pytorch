@@ -44,6 +44,12 @@ def read_patch(patch_obj):
         # read the all bands
         indexes = img_obj.indexes
         data = img_obj.read(indexes,window=window)
+
+        # replace the nodata as zeros (means background)
+        if img_obj.profile.has_key('nodata'):
+            nodata = img_obj.profile['nodata']
+            data[np.where(data==nodata)] = 0
+
         return data
 
 def check_input_image_and_label(image_path, label_path):
