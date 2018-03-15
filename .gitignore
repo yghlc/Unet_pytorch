@@ -1,3 +1,9 @@
 .idea
 *pycache*
 data
+
+# python intermediate file
+*.pyc
+
+# log file or output (text)
+*.txt
