@@ -98,7 +98,7 @@ def saveImg(img, patch_info, binary=True, fName=''):
     img = (img * 255).astype(rasterio.uint8)
     org_img_path = patch_info[0][0]
     boundary = patch_info[1]
-    boundary = [item[0] for item in boundary]
+    boundary = [item[0].cpu().data.numpy() for item in boundary]
     xsize = boundary[2]
     ysize = boundary[3]
 
