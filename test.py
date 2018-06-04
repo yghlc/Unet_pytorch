@@ -134,7 +134,7 @@ def saveImg(img, patch_info, binary=True, fName=''):
 
 
 model.eval()
-train_loader.batch_size = args.batchSize
+#train_loader.batch_size = args.batchSize
 
 patch_number = len(train_loader)
 
